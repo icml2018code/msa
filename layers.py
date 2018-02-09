@@ -235,7 +235,8 @@ class BinaryFullyConnectedLayer(AbstractLayer):
 
         Returns:
             x {tf tensor} -- x_{t+1}
-        """        x_in_dim = np.prod(x.get_shape().as_list()[1:])
+        """
+        x_in_dim = np.prod(x.get_shape().as_list()[1:])
         w_in_dim = self.vars[0].get_shape().as_list()[0]
         assert x_in_dim == w_in_dim, 'Input/vars shape inconsistent.'
         x_next = tf.contrib.layers.flatten(x) @ tf.to_float(self.vars[0])
@@ -438,7 +439,8 @@ class BinaryConvolutionLayer(BinaryFullyConnectedLayer):
 
         Returns:
             x {tf tensor} -- x_{t+1}
-        """        x_in_dim = x.get_shape().as_list()[-1]
+        """
+        x_in_dim = x.get_shape().as_list()[-1]
         w_in_dim = self.vars[0].get_shape().as_list()[2]
         assert x_in_dim == w_in_dim, 'Input/vars shape inconsistent.'
         weights = tf.to_float(self.vars[0])
