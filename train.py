@@ -1,4 +1,5 @@
-""" Training algorithms for Binary Neural Networks """
+"""Trainer
+"""
 
 import numpy as np
 import tensorflow as tf
@@ -13,11 +14,14 @@ class Trainer(object):
     """
 
     def __init__(self, network, data_train, sess=None):
-        """
-        Inputs:
-            network: instance of network.NeuralNetwork class
-            data_train: tuple of train inputs/labels
-            data_test: tuple of test inputs/labels
+        """Initializer
+
+        Arguments:
+            network {network.NeuralNetwork} -- NeuralNetwork object
+            data_train {tuple of np float} -- (train_images, train_labels)
+
+        Keyword Arguments:
+            sess {tf session} -- Session (default: {None})
         """
         self.network = network
         assert self.network.finalized, 'Finalize network first.'
@@ -27,12 +31,20 @@ class Trainer(object):
         self.reset()
 
     def reset(self):
-        """ Re-init all variables """
+        """Re-init everything
+        """
         self.ptr = 0
         self.sess.run(self.network.init)
 
     def getbatch(self, batch_size):
-        """ Get a batch of samples """
+        """Generate a batch of training data
+
+        Arguments:
+            batch_size {int} -- batch size
+
+        Returns:
+            tuple of np float -- (batch_images, batch_labels)
+        """
         train_size = self.x_train.shape[0]
         start = self.ptr
         end = self.ptr+batch_size \
@@ -44,8 +56,10 @@ class Trainer(object):
         return x_batch, y_batch
 
     def get_learning_rates(self):
-        """
-        Get learning rates
+        """Get learning rates
+
+        Returns:
+            list -- learning rates (None means no lr)
         """
         learning_rates = [
             self.sess.run(obj.learning_rate) if hasattr(obj, 'learning_rate')
@@ -53,10 +67,10 @@ class Trainer(object):
         return learning_rates
 
     def set_learning_rates(self, value):
-        """
-        Set learning_rates to value
-        Inputs:
-            value: scalar or list of new lr values
+        """Set learning rates to value
+
+        Arguments:
+            value {float or list} -- New learning rates
                 if scalar: set all to new value
                 if list: set corresponding layers to new values
         """
@@ -68,8 +82,10 @@ class Trainer(object):
                     session=self.sess, new_rate=value[l])
 
     def decay_learning_rates(self, decay_rate):
-        """
-        Decay learning rates
+        """Decay learning rates
+
+        Arguments:
+            decay_rate {float} -- factor to decay
         """
         if not isinstance(decay_rate, list):
             decay_rate = [decay_rate]*self.network.n_layers
@@ -80,8 +96,10 @@ class Trainer(object):
         self.set_learning_rates(lrs)
 
     def get_ema_rates(self):
-        """
-        Get ema decay rates
+        """Get EMA rates
+
+        Returns:
+            list -- EMA rates (None means no ema rate)
         """
         ema_rates = [
             self.sess.run(obj.ema_decay_rate)
@@ -90,8 +108,12 @@ class Trainer(object):
         return ema_rates
 
     def set_ema_rates(self, values):
-        """
-        Set ema to new values
+        """Set EMA rates to value
+
+        Arguments:
+            value {float or list} -- New EMA rates
+                if scalar: set all to new value
+                if list: set corresponding layers to new values
         """
         if not isinstance(values, list):
             values = [values]*self.network.n_layers
@@ -101,8 +123,11 @@ class Trainer(object):
                     session=self.sess, new_rate=values[l])
 
     def decay_ema_rates(self, decay_rate):
-        """
-        Decay ema decay rate parameters
+        """Decay learning rates
+        new_rate = 1 - (1-old_rate)*decay_rate
+
+        Arguments:
+            decay_rate {float} -- factor to decay
         """
         if not isinstance(decay_rate, list):
             decay_rate = [decay_rate]*self.network.n_layers
@@ -114,8 +139,10 @@ class Trainer(object):
         self.set_ema_rates(edrs)
 
     def get_rho(self):
-        """
-        Get ema decay rates
+        """Get rho values
+
+        Returns:
+            list -- rho values (None means no value)
         """
         rho = [
             self.sess.run(obj.rho)
@@ -124,8 +151,12 @@ class Trainer(object):
         return rho
 
     def set_rho(self, values):
-        """
-        Set ema to new values
+        """Set rho to value
+
+        Arguments:
+            value {float or list} -- New rho values
+                if scalar: set all to new value
+                if list: set corresponding layers to new values
         """
         if not isinstance(values, list):
             values = [values]*self.network.n_layers
@@ -135,11 +166,11 @@ class Trainer(object):
                     session=self.sess, new_rate=values[l])
 
     def train_step(self, data_batch, n_train):
-        """
-        Train step
-        Inputs:
-            data_batch: tuple of (inputs, labels)
-            n_train: None or scalar or list
+        """Train step
+
+        Arguments:
+            data_batch {tuple of np float} -- (x_batch, y_batch)
+            n_train {None or list of float} -- Layers to train
                 None: train all layers
                 Scalar: train randomly selected sublist of this length
                 List: train layers whose id are found in the list
@@ -176,18 +207,29 @@ class Trainer(object):
             obj.train(session=self.sess,
                       feeds=(xs_val[l], ps_val[l+1]))
 
-    def train_epoch(self, batch_size,
-                    n_output=10,
-                    lr_decay=None,
-                    ema_decay=None,
-                    n_train=None,
-                    shuffle_data=True, verbose=True):
-        """
-        Train for one epoch
-        Inputs:
-            n_output: number of outputs of estimated train loss
+    def train_epoch(self, batch_size, n_output=10, lr_decay=None,
+                    ema_decay=None, n_train=None, shuffle_data=True,
+                    verbose=True):
+        """Train one epoch
+
+        Arguments:
+            batch_size {int} -- batch size
+
+        Keyword Arguments:
+            n_output {int} -- number of outputs (default: {10})
+            lr_decay {float} -- learning rate decay (default: {None})
+            ema_decay {float} -- ema rate decay (default: {None})
+            n_train {None or int or list} -- layers to train (default: {None})
+                None: train all layers
+                Scalar: train randomly selected sublist of this length
+                List: train layers whose id are found in the list
+            shuffle_data {boolean} -- whether to shuffle data at the start
+                (default: {True})
+            verbose {boolean} -- print n_output data (default: {True})
+
         Returns:
-            list of batch loss and acc for this epoch
+            tuple of list of floats -- computed batch losses
+                and accuracies in epoch
         """
         self.ptr = 0
         if shuffle_data:
@@ -224,7 +266,20 @@ class Trainer(object):
         return epoch_losses, epoch_accs
 
     def loss_and_accuracy(self, data, inference=False, max_batch=10000):
-        """ output loss and accuracy values """
+        """Compute losses and accuracies
+
+        Arguments:
+            data {tuple of np float} -- (images, labels)
+
+        Keyword Arguments:
+            inference {boolean} -- use EMA average values in batch norm layers
+                (default: {False})
+            max_batch {int} -- Maximum batch size to feed (for GPU memory)
+                (default: {10000})
+
+        Returns:
+            tuple of float -- loss, accuracy
+        """
         num_samples = data[0].shape[0]
         loss_total, acc_total = 0.0, 0.0
         ptr = 0
@@ -259,11 +314,21 @@ class Trainer(object):
         return loss_total, acc_total
 
     def save(self, directory, filename):
-        """ save variables """
+        """Save trained model
+
+        Arguments:
+            directory {string} -- directory
+            filename {string} -- saved file name
+        """
         if not os.path.exists(directory):
             os.makedirs(directory)
         self.saver.save(self.sess, directory+filename)
 
     def restore(self, directory, filename):
-        """ restore variables """
+        """Restore trained model
+
+        Arguments:
+            directory {string} -- directory
+            filename {string} -- saved file name
+        """
         self.saver.restore(self.sess, directory+filename)

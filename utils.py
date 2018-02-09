@@ -7,8 +7,14 @@ import itertools
 
 
 def smooth_hinge_loss(labels, logits):
-    """
-    Square smoothed hinge loss
+    """Square smoothed hinge loss
+
+    Arguments:
+        labels {tf tensor} -- labels
+        logits {tf tensor} -- logits
+
+    Returns:
+        tf tensor rank 0 -- loss
     """
     labels = 2*labels - 1  # make it +1 and -1
     loss = tf.nn.relu(1 - logits*labels)
@@ -17,17 +23,26 @@ def smooth_hinge_loss(labels, logits):
 
 
 def get_ph(tensor):
-    """
-    Helper function that returns a tf.placeholder
-    tensor that is the same size/dtype as the input
-    tensor
+    """Returns a tf.placeholder that has the same size/dtype as tensor
+
+    Arguments:
+        tensor {tf tensor} -- tensor
+
+    Returns:
+        tf placeholder -- placeholder with same size/dtype as tensor
     """
     return tf.placeholder(tensor.dtype, tensor.get_shape())
 
 
 def get_sparsity_frac(network, trainer):
-    """
-    Returns the fraction of non-zero weights
+    """Compute sparsity fraction, i.e. fraction of non-zero weights in the graph
+
+    Arguments:
+        network {layers.NeuralNetwork} -- network object
+        trainer {train.Trainer} -- trainer object
+
+    Returns:
+        float -- fraction of non-zero weights
     """
     num_params = np.sum(
         [np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()])
@@ -41,7 +56,11 @@ def get_sparsity_frac(network, trainer):
 
 
 def load_mnist_data():
-    """ Load MNIST dataset """
+    """Load MNIST dataset
+
+    Returns:
+        tuple of floats -- img, label for train, valid, test
+    """
     # load MNIST dataset
     from tensorflow.examples.tutorials.mnist import input_data
     mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
@@ -62,12 +81,16 @@ def load_mnist_data():
     y_validate = labels[n_train:n_train+n_valid]
     x_test = images[-n_test:]
     y_test = labels[-n_test:]
-    
+
     return x_train, y_train, x_validate, y_validate, x_test, y_test
 
 
 def load_cifar10_data():
-    """ Load CIFAR-10 dataset """
+    """Load CIFAR-10 dataset
+
+    Returns:
+        tuple of floats -- img, label for train, valid, test
+    """
     import cifar10
     cifar10.maybe_download_and_extract()
     images_train, cls_train, labels_train = cifar10.load_training_data()
@@ -81,52 +104,61 @@ def load_cifar10_data():
 
     x_test = images_test
     y_test = labels_test
-    
+
     return x_train, y_train, x_validate, y_validate, x_test, y_test
-    
-"""
-Converting Labels to One Hot Encoding and Image Matrix to favourable dimensions
-"""
+
+
 def reformat(data, Y):
+    """Convert labels to one-hot Encoding and image matrix to favourable dimensions
+
+    Arguments:
+        data {np float} -- images
+        Y {np float} -- labels
+    """
     xtrain = []
     trainLen = data.shape[3]
     for x in range(trainLen):
-        xtrain.append(data[:,:,:,x])
+        xtrain.append(data[:, :, :, x])
     xtrain = np.asarray(xtrain)
-    Ytr=[]
+    Ytr = []
     for el in Y:
-        temp=np.zeros(10)
-        if el==10:
-            temp[0]=1
-        elif el==1:
-            temp[1]=1
-        elif el==2:
-            temp[2]=1
-        elif el==3:
-            temp[3]=1
-        elif el==4:
-            temp[4]=1
-        elif el==5:
-            temp[5]=1
-        elif el==6:
-            temp[6]=1
-        elif el==7:
-            temp[7]=1
-        elif el==8:
-            temp[8]=1
-        elif el==9:
-            temp[9]=1
+        temp = np.zeros(10)
+        if el == 10:
+            temp[0] = 1
+        elif el == 1:
+            temp[1] = 1
+        elif el == 2:
+            temp[2] = 1
+        elif el == 3:
+            temp[3] = 1
+        elif el == 4:
+            temp[4] = 1
+        elif el == 5:
+            temp[5] = 1
+        elif el == 6:
+            temp[6] = 1
+        elif el == 7:
+            temp[7] = 1
+        elif el == 8:
+            temp[8] = 1
+        elif el == 9:
+            temp[9] = 1
         Ytr.append(temp)
     return xtrain, np.asarray(Ytr)
 
+
 def load_svhn_data():
-    """ Load SVHN dataset """
+    """Load SVHN dataset
+
+    Returns:
+        tuple of floats -- img, label for train, valid, test
+    """
     import scipy.io
     x_train = scipy.io.loadmat('./data/svhn/train_32x32.mat')['X']
     y_train = scipy.io.loadmat('./data/svhn/train_32x32.mat')['y']
     x_test = scipy.io.loadmat('./data/svhn/test_32x32.mat')['X']
     y_test = scipy.io.loadmat('./data/svhn/test_32x32.mat')['y']
-    
+
     x_train, y_train = reformat(x_train, y_train)
     x_test, y_test = reformat(x_test, y_test)
 
@@ -138,6 +170,5 @@ def load_svhn_data():
 
     x_train = x_train[:-5000]
     y_train = y_train[:-5000]
-    
+
     return x_train, y_train, x_validate, y_validate, x_test, y_test
-    
