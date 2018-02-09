@@ -108,43 +108,25 @@ def load_cifar10_data():
     return x_train, y_train, x_validate, y_validate, x_test, y_test
 
 
-def reformat(data, Y):
+def reformat(images, labels, num_classes=10):
     """Convert labels to one-hot Encoding and image matrix to favourable dimensions
 
     Arguments:
-        data {np float} -- images
-        Y {np float} -- labels
+        images {np float} -- images size [channel, dim, dim, batch]
+        labels {np int} -- labels size [batch, 1]
+
+    Keyword Arguments:
+        num_classes {int} -- number of classes (default: {10})
+
+    Returns:
+        tuples of np float -- images, labels with dimensions
+            [batch, dim, dim, channel], [batch, num_classes]
     """
-    xtrain = []
-    trainLen = data.shape[3]
-    for x in range(trainLen):
-        xtrain.append(data[:, :, :, x])
-    xtrain = np.asarray(xtrain)
-    Ytr = []
-    for el in Y:
-        temp = np.zeros(10)
-        if el == 10:
-            temp[0] = 1
-        elif el == 1:
-            temp[1] = 1
-        elif el == 2:
-            temp[2] = 1
-        elif el == 3:
-            temp[3] = 1
-        elif el == 4:
-            temp[4] = 1
-        elif el == 5:
-            temp[5] = 1
-        elif el == 6:
-            temp[6] = 1
-        elif el == 7:
-            temp[7] = 1
-        elif el == 8:
-            temp[8] = 1
-        elif el == 9:
-            temp[9] = 1
-        Ytr.append(temp)
-    return xtrain, np.asarray(Ytr)
+    images = images.transpose([3, 0, 1, 2])
+    batch_size = labels.size
+    onehot_labels = np.zeros((batch_size, num_classes))
+    onehot_labels[np.arange(batch_size), labels.squeeze()%num_classes] = 1
+    return images, onehot_labels
 
 
 def load_svhn_data():
